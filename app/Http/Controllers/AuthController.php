@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUserRequest;
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
 
 class AuthController extends Controller
 {
@@ -13,33 +17,40 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required|string'
         ]);
-        // Attempt to authenticate the user
-        if (!auth()->attempt($request->only('email', 'password'))) {
+        $user = User::where('email', $request->email)->firstOrFail();
+
+
+        if (!Hash::check($request->password, $user->password)) {
             return response()->json([
                 'message' => 'Invalid credentials'
             ], 401);
         }
-        // Generate a new token for the user
-        $token = auth()->user()->createToken('auth_token')->plainTextToken;
-        // Return the token in the response
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
             'message' => 'Login successful',
             'token' => $token,
-            'user' => auth()->user()
+            'user' => $user
         ]);
-        // Return the user information in the response
-        return response()->json([
-            'message' => 'Login successful',
-            'user' => $request->user()
-        ]); 
 
     }
 
-    public function register(Request $request)
+    public function register(StoreUserRequest $request)
     {
+
+        $user = User::create([
+            'name' => $request['name'],
+            'email' => $request['email'],
+            'password' => bcrypt($request['password'])
+        ]);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
             'message' => 'Registration successful',
-            'user' => $request->user()
+            'auth_token' => $token,
+            'user' => $user
         ]);
     }
 
@@ -49,6 +60,13 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logout successful'
+        ]);
+    }
+
+    public function me(Request $request)
+    {
+        return response()->json([
+            'user' => $request->user()
         ]);
     }
 }

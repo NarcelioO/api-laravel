@@ -7,33 +7,36 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 
+
 class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+
     public function index()
     {
-        // Fetch all products from the database
-        $products = Product::all();
-        // Return the products as a collection of ProductResource
-        return ProductResource::collection($products);
+        $products = ProductResource::collection(Product::all());
+        return response()->json([
+            'data' => $products,
+            'status' => 200,
+            'message' => 'Products retrieved successfully'
+        ]);
+        // return ProductResource::collection($products);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(StoreProductRequest $request)
     {
-        //
+        // $product = Product::create($request->validated());
+        $product = ProductResource::make(Product::create($request->validated()));
+        return response()->json([
+            'data' => $product,
+            'message' => 'Product created successfully'
+        ], 201);
     }
 
     /**
@@ -44,13 +47,6 @@ class ProductController extends Controller
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Product $product)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
